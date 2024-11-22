@@ -29,6 +29,7 @@ func (fm *FileManager) ReadFile() (data []float64, err error) {
 		fmt.Println(err)
 		return nil, fmt.Errorf("failed to open resource %s", fm.InputPath)
 	}
+	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 
@@ -36,15 +37,12 @@ func (fm *FileManager) ReadFile() (data []float64, err error) {
 		text := scanner.Text()
 		priceInFloat, err := strconv.ParseFloat(text, 64)
 		if err != nil {
-			_ = file.Close()
 			fmt.Println(err)
 			return nil, errors.New("failed to read the file")
 		}
 
 		data = append(data, priceInFloat)
 	}
-
-	_ = file.Close()
 
 	return data, nil
 }
