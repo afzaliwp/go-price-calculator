@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 )
 
 type FileManager struct {
@@ -49,6 +50,7 @@ func (fm *FileManager) ReadFile() (data []float64, err error) {
 }
 
 func (fm *FileManager) OutputJsonFile(data interface{}) error {
+	time.Sleep(3 * time.Second) //only to see how routines are effecting
 	file, err := os.Create(fm.OutputPath)
 	if err != nil {
 		fmt.Println(err)

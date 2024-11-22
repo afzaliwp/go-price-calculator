@@ -9,14 +9,18 @@ import (
 
 func main() {
 	taxRates := []float64{0.0, 0.07, 0.10, 0.15}
-
-	for _, tax := range taxRates {
+	doneChans := make([]chan bool, len(taxRates))
+	for index, tax := range taxRates {
+		doneChans[index] = make(chan bool)
 		fm := storage.NewFileManager(
 			env.PRICES_FILE,
 			fmt.Sprintf("storage/prices-%.0f-tax.json", tax*100),
 		)
 		taxIncludedPriceJob := prices.NewTaxIncludedPriceJob(fm, tax)
-		taxIncludedPriceJob.Process()
+		go taxIncludedPriceJob.Process(doneChans[index])
 	}
 
+	for _, doneChan := range doneChans {
+		<-doneChan
+	}
 }

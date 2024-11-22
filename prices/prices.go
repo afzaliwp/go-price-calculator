@@ -26,7 +26,7 @@ func (job *TaxIncludedPriceJob) LoadPrices() error {
 	return nil
 }
 
-func (job TaxIncludedPriceJob) Process() {
+func (job TaxIncludedPriceJob) Process(doneChan chan bool) {
 	job.LoadPrices()
 	job.TaxIncludedPrices = make(map[string]float64, len(job.InputPrices))
 
@@ -40,10 +40,12 @@ func (job TaxIncludedPriceJob) Process() {
 
 	if err != nil {
 		fmt.Errorf("error saving prices: %s", err.Error())
+		doneChan <- false
 		return
 	}
 
 	fmt.Println(job.TaxIncludedPrices)
+	doneChan <- true
 }
 
 func NewTaxIncludedPriceJob(fm *storage.FileManager, taxRate float64) *TaxIncludedPriceJob {
