@@ -1,14 +1,11 @@
 package prices
 
 import (
-	"bufio"
-	"errors"
 	"fmt"
 	"math"
-	"os"
-	"strconv"
 
 	"github.com/afzaliwp/go-price-calculator/env"
+	"github.com/afzaliwp/go-price-calculator/storage"
 )
 
 type TaxIncludedPriceJob struct {
@@ -18,26 +15,13 @@ type TaxIncludedPriceJob struct {
 }
 
 func (job *TaxIncludedPriceJob) LoadPrices() error {
-	file, err := os.Open(env.PRICES_FILE)
-
+	data, err := storage.ReadFile(env.PRICES_FILE)
 	if err != nil {
 		fmt.Println(err)
-		return fmt.Errorf("failed to open resource %s", env.PRICES_FILE)
+		return err
 	}
 
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		text := scanner.Text()
-		priceInFloat, err := strconv.ParseFloat(text, 64)
-		if err != nil {
-			file.Close()
-			fmt.Println(err)
-			return errors.New("failed to read the file")
-		}
-
-		job.InputPrices = append(job.InputPrices, priceInFloat)
-	}
+	job.InputPrices = data
 
 	return nil
 }
@@ -50,6 +34,16 @@ func (job TaxIncludedPriceJob) Process() {
 		TaxIncludedPrice := price * (1 + job.TaxRate)             //Calculated the taxed price
 		TaxIncludedPrice = math.Round(TaxIncludedPrice*100) / 100 //Round to two decimals
 		job.TaxIncludedPrices[fmt.Sprintf("%.2f", price)] = TaxIncludedPrice
+	}
+
+	err := storage.SaveJson(
+		fmt.Sprintf("storage/prices-%.0f-tax.json", job.TaxRate*100),
+		job.TaxIncludedPrices,
+	)
+
+	if err != nil {
+		fmt.Errorf("error saving prices: %s", err.Error())
+		return
 	}
 
 	fmt.Println(job.TaxIncludedPrices)
