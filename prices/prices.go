@@ -38,7 +38,7 @@ func (job TaxIncludedPriceJob) Process() {
 
 	err := storage.SaveJson(
 		fmt.Sprintf("storage/prices-%.0f-tax.json", job.TaxRate*100),
-		job.TaxIncludedPrices,
+		job,
 	)
 
 	if err != nil {
