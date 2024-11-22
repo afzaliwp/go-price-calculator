@@ -1,6 +1,7 @@
 package prices
 
 import (
+	"errors"
 	"fmt"
 	"math"
 
@@ -26,8 +27,12 @@ func (job *TaxIncludedPriceJob) LoadPrices() error {
 	return nil
 }
 
-func (job TaxIncludedPriceJob) Process(doneChan chan bool) {
-	job.LoadPrices()
+func (job TaxIncludedPriceJob) Process(doneChan chan bool, errorChan chan error) {
+	err := job.LoadPrices()
+	errorChan <- errors.New("A sample error")
+	if err != nil {
+		errorChan <- fmt.Errorf("error saving prices: %s", err.Error())
+	}
 	job.TaxIncludedPrices = make(map[string]float64, len(job.InputPrices))
 
 	for _, price := range job.InputPrices {
@@ -36,12 +41,10 @@ func (job TaxIncludedPriceJob) Process(doneChan chan bool) {
 		job.TaxIncludedPrices[fmt.Sprintf("%.2f", price)] = TaxIncludedPrice
 	}
 
-	err := job.IOManager.OutputJsonFile(job)
+	err = job.IOManager.OutputJsonFile(job)
 
 	if err != nil {
-		fmt.Errorf("error saving prices: %s", err.Error())
-		doneChan <- false
-		return
+		errorChan <- fmt.Errorf("error saving prices: %s", err.Error())
 	}
 
 	fmt.Println(job.TaxIncludedPrices)
