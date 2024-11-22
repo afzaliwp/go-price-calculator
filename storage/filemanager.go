@@ -9,12 +9,24 @@ import (
 	"strconv"
 )
 
-func ReadFile(filepath string) (data []float64, err error) {
-	file, err := os.Open(filepath)
+type FileManager struct {
+	InputPath  string
+	OutputPath string
+}
+
+func NewFileManager(inputPath string, outputPath string) *FileManager {
+	return &FileManager{
+		InputPath:  inputPath,
+		OutputPath: outputPath,
+	}
+}
+
+func (fm *FileManager) ReadFile() (data []float64, err error) {
+	file, err := os.Open(fm.InputPath)
 
 	if err != nil {
 		fmt.Println(err)
-		return nil, fmt.Errorf("failed to open resource %s", filepath)
+		return nil, fmt.Errorf("failed to open resource %s", fm.InputPath)
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -36,11 +48,11 @@ func ReadFile(filepath string) (data []float64, err error) {
 	return data, nil
 }
 
-func SaveJson(path string, data interface{}) error {
-	file, err := os.Create(path)
+func (fm *FileManager) OutputJsonFile(data interface{}) error {
+	file, err := os.Create(fm.OutputPath)
 	if err != nil {
 		fmt.Println(err)
-		return fmt.Errorf("failed to save resource %s", path)
+		return fmt.Errorf("failed to save resource %s", fm.OutputPath)
 	}
 
 	defer file.Close()
@@ -51,7 +63,7 @@ func SaveJson(path string, data interface{}) error {
 	err = encoder.Encode(data)
 	if err != nil {
 		fmt.Println(err)
-		return fmt.Errorf("failed to save resource %s", path)
+		return fmt.Errorf("failed to save resource %s", fm.OutputPath)
 	}
 
 	return err
